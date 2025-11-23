@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Configuration and secrets
+config.yaml
+.env
+*.log
+
+# Development
+.DS_Store

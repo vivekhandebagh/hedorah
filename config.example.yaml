@@ -1,0 +1,42 @@
+# Hedorah Configuration File
+# Copy this to config.yaml and fill in your settings
+
+# Vault settings
+vault:
+  path: "/path/to/your/obsidian/vault"
+  folders:
+    papers: "papers"
+    notes: "notes"
+    experiments: "experiments"
+    attachments: "attachments"
+    inbox: "inbox"
+
+# LLM settings
+llm:
+  # Local model for PDF processing and summarization (via Ollama)
+  local:
+    model: "qwen2.5:latest"
+    api_url: "http://localhost:11434"
+
+  # SOTA model for deep reasoning (Claude)
+  reasoning:
+    provider: "anthropic"
+    model: "claude-sonnet-4-5-20250929"
+    api_key: "${ANTHROPIC_API_KEY}"  # Set via environment variable
+
+# Processing settings
+processing:
+  extract_figures: true
+  extract_equations: true
+  extract_citations: true
+  auto_tag: true
+
+# Watch mode settings
+watch:
+  enabled: false
+  interval: 5  # seconds
+
+# Logging
+logging:
+  level: "INFO"
+  file: "hedorah.log"

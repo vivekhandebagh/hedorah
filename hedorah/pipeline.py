@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from .config import Config
 from .pdf_processor import PDFProcessor, PDFContent
-from .llm import OllamaClient, ClaudeClient
+from .llm import OllamaClient, create_reasoning_client
 from .obsidian import ObsidianFormatter
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class HedorahPipeline:
         )
 
         self.ollama = OllamaClient(config)
-        self.claude = ClaudeClient(config)
+        self.reasoning_client = create_reasoning_client(config)
         self.formatter = ObsidianFormatter(config.vault_path)
 
         # Setup logging
@@ -78,7 +78,7 @@ class HedorahPipeline:
 
         # 3. Deep analysis with Claude
         logger.info("Step 3/5: Performing deep analysis with Claude...")
-        analysis = self.claude.analyze_paper(content, summary)
+        analysis = self.reasoning_client.analyze_paper(content, summary)
         logger.info(f"Identified {len(analysis.get('key_insights', []))} insights, "
                    f"{len(analysis.get('research_gaps', []))} research gaps")
 
@@ -86,7 +86,7 @@ class HedorahPipeline:
         experiments = []
         if not skip_experiments:
             logger.info("Step 4/5: Generating experiment proposals...")
-            experiments = self.claude.generate_experiments(content, analysis)
+            experiments = self.reasoning_client.generate_experiments(content, analysis)
             logger.info(f"Generated {len(experiments)} experiment proposals")
         else:
             logger.info("Step 4/5: Skipping experiment generation")

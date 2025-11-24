@@ -47,7 +47,47 @@ uv run hedorah init
 
 5. Edit config.yaml and set your Obsidian vault path
 
-6. Edit .env and add your Anthropic API key
+6. Edit .env and add your API key(s)
+
+## Supported LLM Providers
+
+Hedorah supports multiple LLM providers for deep reasoning and analysis:
+
+### Anthropic (Claude)
+```yaml
+# config.yaml
+llm:
+  reasoning:
+    provider: "anthropic"
+    model: "claude-sonnet-4-5-20250929"
+    api_key: "${ANTHROPIC_API_KEY}"
+```
+
+Models: claude-sonnet-4-5-20250929, claude-opus-4-20250514, claude-sonnet-3-5-20241022
+
+### OpenAI (GPT-4, o1)
+```yaml
+# config.yaml
+llm:
+  reasoning:
+    provider: "openai"
+    model: "gpt-4-turbo"
+    api_key: "${OPENAI_API_KEY}"
+```
+
+Models: gpt-4-turbo, gpt-4, gpt-4o, o1-preview, o1-mini
+
+### Google Gemini
+```yaml
+# config.yaml
+llm:
+  reasoning:
+    provider: "gemini"
+    model: "gemini-1.5-pro"
+    api_key: "${GOOGLE_API_KEY}"
+```
+
+Models: gemini-1.5-pro, gemini-1.5-flash, gemini-pro
 
 ## Usage
 

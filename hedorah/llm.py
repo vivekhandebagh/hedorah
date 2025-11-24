@@ -3,7 +3,10 @@
 import json
 import requests
 from typing import Dict, Any, List, Optional
+from abc import ABC, abstractmethod
 from anthropic import Anthropic
+from openai import OpenAI
+import google.generativeai as genai
 from .config import Config
 from .pdf_processor import PDFContent
 
@@ -114,43 +117,13 @@ Provide a JSON response with the following structure:
             }
 
 
-class ClaudeClient:
-    """Client for Claude API (SOTA reasoning)."""
+class ReasoningClient(ABC):
+    """Abstract base class for reasoning LLM clients."""
 
-    def __init__(self, config: Config):
-        """Initialize Claude client.
-
-        Args:
-            config: Hedorah configuration
-        """
-        self.config = config
-        self.client = Anthropic(api_key=config.anthropic_api_key)
-        self.model = config.reasoning_model
-
+    @abstractmethod
     def generate(self, prompt: str, system: str = None, max_tokens: int = 4000) -> str:
-        """Generate text using Claude.
-
-        Args:
-            prompt: User prompt
-            system: System prompt (optional)
-            max_tokens: Maximum tokens to generate
-
-        Returns:
-            Generated text
-        """
-        messages = [{"role": "user", "content": prompt}]
-
-        kwargs = {
-            "model": self.model,
-            "max_tokens": max_tokens,
-            "messages": messages
-        }
-
-        if system:
-            kwargs["system"] = system
-
-        response = self.client.messages.create(**kwargs)
-        return response.content[0].text
+        """Generate text using the LLM."""
+        pass
 
     def analyze_paper(self, content: PDFContent, summary: Dict[str, Any]) -> Dict[str, Any]:
         """Perform deep analysis of a research paper.
@@ -307,3 +280,154 @@ Generate 2-4 experiment proposals in JSON format:
             formatted.append(f"## {title}\n{truncated}")
 
         return "\n\n".join(formatted)
+
+
+class ClaudeClient(ReasoningClient):
+    """Client for Claude API (Anthropic)."""
+
+    def __init__(self, config: Config):
+        """Initialize Claude client.
+
+        Args:
+            config: Hedorah configuration
+        """
+        self.config = config
+        api_key = config.get('llm.reasoning.api_key')
+        if not api_key or api_key.startswith('${'):
+            raise ValueError("Anthropic API key not configured")
+        self.client = Anthropic(api_key=api_key)
+        self.model = config.reasoning_model
+
+    def generate(self, prompt: str, system: str = None, max_tokens: int = 4000) -> str:
+        """Generate text using Claude.
+
+        Args:
+            prompt: User prompt
+            system: System prompt (optional)
+            max_tokens: Maximum tokens to generate
+
+        Returns:
+            Generated text
+        """
+        messages = [{"role": "user", "content": prompt}]
+
+        kwargs = {
+            "model": self.model,
+            "max_tokens": max_tokens,
+            "messages": messages
+        }
+
+        if system:
+            kwargs["system"] = system
+
+        response = self.client.messages.create(**kwargs)
+        return response.content[0].text
+
+
+class OpenAIClient(ReasoningClient):
+    """Client for OpenAI API (GPT-4, o1, etc.)."""
+
+    def __init__(self, config: Config):
+        """Initialize OpenAI client.
+
+        Args:
+            config: Hedorah configuration
+        """
+        self.config = config
+        api_key = config.get('llm.reasoning.api_key')
+        if not api_key or api_key.startswith('${'):
+            raise ValueError("OpenAI API key not configured")
+        self.client = OpenAI(api_key=api_key)
+        self.model = config.reasoning_model
+
+    def generate(self, prompt: str, system: str = None, max_tokens: int = 4000) -> str:
+        """Generate text using OpenAI.
+
+        Args:
+            prompt: User prompt
+            system: System prompt (optional)
+            max_tokens: Maximum tokens to generate
+
+        Returns:
+            Generated text
+        """
+        messages = []
+
+        if system:
+            messages.append({"role": "system", "content": system})
+
+        messages.append({"role": "user", "content": prompt})
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            max_tokens=max_tokens
+        )
+
+        return response.choices[0].message.content
+
+
+class GeminiClient(ReasoningClient):
+    """Client for Google Gemini API."""
+
+    def __init__(self, config: Config):
+        """Initialize Gemini client.
+
+        Args:
+            config: Hedorah configuration
+        """
+        self.config = config
+        api_key = config.get('llm.reasoning.api_key')
+        if not api_key or api_key.startswith('${'):
+            raise ValueError("Google API key not configured")
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel(config.reasoning_model)
+
+    def generate(self, prompt: str, system: str = None, max_tokens: int = 4000) -> str:
+        """Generate text using Gemini.
+
+        Args:
+            prompt: User prompt
+            system: System prompt (optional)
+            max_tokens: Maximum tokens to generate
+
+        Returns:
+            Generated text
+        """
+        # Gemini combines system and user prompts
+        full_prompt = prompt
+        if system:
+            full_prompt = f"{system}\n\n{prompt}"
+
+        response = self.model.generate_content(
+            full_prompt,
+            generation_config=genai.types.GenerationConfig(
+                max_output_tokens=max_tokens
+            )
+        )
+
+        return response.text
+
+
+def create_reasoning_client(config: Config) -> ReasoningClient:
+    """Factory function to create the appropriate reasoning client.
+
+    Args:
+        config: Hedorah configuration
+
+    Returns:
+        ReasoningClient instance
+
+    Raises:
+        ValueError: If provider is not supported
+    """
+    provider = config.get('llm.reasoning.provider', 'anthropic').lower()
+
+    if provider == 'anthropic':
+        return ClaudeClient(config)
+    elif provider == 'openai':
+        return OpenAIClient(config)
+    elif provider == 'gemini' or provider == 'google':
+        return GeminiClient(config)
+    else:
+        raise ValueError(f"Unsupported reasoning provider: {provider}")

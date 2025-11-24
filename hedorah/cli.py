@@ -204,7 +204,9 @@ def info(config: str):
         click.echo(f"\nLocal Model: {cfg.local_model}")
         click.echo(f"  Ollama URL: {cfg.ollama_url}")
 
-        click.echo(f"\nReasoning Model: {cfg.reasoning_model}")
+        provider = cfg.get('llm.reasoning.provider', 'anthropic')
+        click.echo(f"\nReasoning Provider: {provider}")
+        click.echo(f"  Model: {cfg.reasoning_model}")
         api_key = cfg.get('llm.reasoning.api_key', 'NOT SET')
         if api_key and not api_key.startswith('${'):
             click.echo(f"  API Key: {'*' * 20}{api_key[-4:]}")

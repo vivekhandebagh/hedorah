@@ -18,11 +18,20 @@ llm:
     model: "qwen2.5:latest"
     api_url: "http://localhost:11434"
 
-  # SOTA model for deep reasoning (Claude)
+  # SOTA model for deep reasoning
+  # Choose provider: "anthropic", "openai", or "gemini"
   reasoning:
-    provider: "anthropic"
+    provider: "anthropic"  # Options: anthropic, openai, gemini
+
+    # Model selection (choose based on provider):
+    # Anthropic: claude-sonnet-4-5-20250929, claude-opus-4-20250514, claude-sonnet-3-5-20241022
+    # OpenAI: gpt-4-turbo, gpt-4, gpt-4o, o1-preview, o1-mini
+    # Gemini: gemini-1.5-pro, gemini-1.5-flash, gemini-pro
     model: "claude-sonnet-4-5-20250929"
-    api_key: "${ANTHROPIC_API_KEY}"  # Set via environment variable
+
+    # API key (set via environment variable)
+    # Use ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY depending on provider
+    api_key: "${ANTHROPIC_API_KEY}"
 
 # Processing settings
 processing:

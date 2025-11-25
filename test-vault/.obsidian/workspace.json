@@ -1,0 +1,226 @@
+{
+  "main": {
+    "id": "7da7f1a680549383",
+    "type": "split",
+    "children": [
+      {
+        "id": "08c1e18c142262f8",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3aeb951d0d68ad11",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "notes/Connections - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Connections - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "99d72d6374bc0ed4",
+    "type": "split",
+    "children": [
+      {
+        "id": "0126dfcb42b15d8c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "08f6374de6f73cbb",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "2216563848460c98",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "68cdedfc27ad3e8c",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "0dfb669100a48227",
+    "type": "split",
+    "children": [
+      {
+        "id": "4b1a60ef99118ebd",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "281388ca764488a5",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "notes/Connections - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Connections - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-"
+            }
+          },
+          {
+            "id": "f51d718f8627f9cb",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "notes/Connections - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Connections - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-"
+            }
+          },
+          {
+            "id": "3d1928627f6c7e94",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "5cc72f6b8c074b42",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "f107d59c4170fc86",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "notes/Connections - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Connections - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "3aeb951d0d68ad11",
+  "lastOpenFiles": [
+    "agendas/default.md",
+    "agendas",
+    "notes/Connections - The-Geometry-of-Prompting-Unveiling-Distinct-Mechanisms-of-Task.md",
+    "notes/Insights - The-Geometry-of-Prompting-Unveiling-Distinct-Mechanisms-of-Task.md",
+    "notes/Connections - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-.md",
+    "notes/Insights - Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-.md",
+    "papers/Neural-Manifold-Capacity-Captures-Representation-Geometry,-Correlations,-and-Task-Efficiency-Across-.md",
+    "experiments/Architecture-Dependent-Representational-Mechanisms-in-Prompting.md",
+    "experiments/Causal-Manipulation-of-GCMC-Through-Targeted-Neural-Stimulation.md",
+    "experiments/Circuit-Level-Mechanisms-of-GCMC-Emergence-in-Recurrent-Neural-Networks.md",
+    "experiments/Cross-Modal-GCMC-Validation-in-Electrophysiology-and-Neuroimaging-Data.md",
+    "experiments/Developmental-Trajectory-of-GCMC-During-Learning-and-Plasticity.md",
+    "experiments/Scaling-Laws-for-Representational-Geometry-in-Prompting.md",
+    "experiments/Training-Data-Influence-on-Representational-Geometry.md",
+    "experiments/Multi-Task-Representational-Interference-Patterns.md",
+    "papers/The-Geometry-of-Prompting-Unveiling-Distinct-Mechanisms-of-Task.md",
+    "attachments/figure_1.png",
+    "attachments/figure_2.png",
+    "attachments/figure_p21_1.png",
+    "attachments/figure_p22_1.png",
+    "attachments/figure_p23_1.png",
+    "attachments/figure_p24_1.png",
+    "experiments/Scaling-Analysis-of-Statistical-Physics-Framework-for-Representational-Geometry.md",
+    "inbox/geometry_of_prompting.pdf",
+    "inbox/2024.02.26.582157v1.full.pdf",
+    "experiments/Mechanistic-Interpretation-of-GCMC-Measures-Through-Circuit-Level-Analysis.md",
+    "experiments/Causal-Manipulation-of-Neural-Manifold-Geometry-and-Behavioral-Performance.md",
+    "experiments/Comparative-Benchmarking-of-GCMC-Against-Existing-Manifold-Analysis-Methods.md",
+    "experiments/Cross-Modal-Validation-of-GCMC-Measures-Across-Recording-Techniques.md",
+    "attachments/figure_p20_2.png",
+    "attachments/figure_p2_1.png",
+    "experiments/Real-Time-Geometric-Monitoring-for-Adaptive-Prompting.md",
+    "experiments/Representation-Aware-Adversarial-Robustness-Analysis.md",
+    "experiments/Cross-Architecture-Geometric-Scaling-Laws.md",
+    "experiments/Causal-Intervention-Analysis-of-Prompting-Method-Mechanisms.md",
+    "experiments/Multi-Turn-Representational-Dynamics-in-Extended-Interactions.md",
+    "experiments/Semantic-Content-Analysis-in-Representational-Geometry-Changes.md"
+  ]
+}

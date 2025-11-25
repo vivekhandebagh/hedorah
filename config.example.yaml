@@ -1,6 +1,12 @@
 # Hedorah Configuration File
 # Copy this to config.yaml and fill in your settings
 
+# Research profile - your research agenda and priorities
+research_profile:
+  # Path to agenda file (relative to vault root)
+  # Write your research goals, focus areas, and priorities in this markdown file
+  agenda: "agendas/default.md"
+
 # Vault settings
 vault:
   path: "/path/to/your/obsidian/vault"
@@ -11,6 +17,7 @@ vault:
     connections: "connections"
     experiments: "experiments"
     attachments: "attachments"
+    agendas: "agendas"
     inbox: "inbox"
 
 # LLM settings

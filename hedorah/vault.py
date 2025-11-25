@@ -1,9 +1,12 @@
 """Vault reading utilities for Hedorah."""
 
 import re
+import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 class VaultReader:
@@ -136,3 +139,76 @@ class VaultReader:
             note for note in all_notes
             if query_lower in note['title'].lower() or query_lower in note['content'].lower()
         ]
+
+    def read_agenda(self, agenda_path: str) -> Optional[Dict[str, Any]]:
+        """Read and parse a research agenda file.
+
+        Args:
+            agenda_path: Path to agenda file (relative to vault root)
+
+        Returns:
+            Dict with 'content' (full text) and 'sections' (parsed sections)
+            Returns None if file doesn't exist
+        """
+        full_path = self.vault_path / agenda_path
+
+        if not full_path.exists():
+            logger.warning(f"Agenda file not found: {full_path}")
+            return None
+
+        try:
+            content = full_path.read_text(encoding='utf-8')
+            sections = self._parse_agenda_sections(content)
+
+            return {
+                'path': str(full_path),
+                'content': content,
+                'sections': sections
+            }
+        except Exception as e:
+            logger.error(f"Error reading agenda file: {e}")
+            return None
+
+    def _parse_agenda_sections(self, content: str) -> Dict[str, str]:
+        """Parse agenda markdown into sections.
+
+        Args:
+            content: Raw markdown content
+
+        Returns:
+            Dict mapping section headers to their content
+        """
+        sections = {}
+        current_section = "overview"
+        current_content = []
+
+        # Skip frontmatter if present
+        lines = content.split('\n')
+        start_idx = 0
+        if lines and lines[0].strip() == '---':
+            for i, line in enumerate(lines[1:], 1):
+                if line.strip() == '---':
+                    start_idx = i + 1
+                    break
+
+        for line in lines[start_idx:]:
+            # Check for headers (## or #)
+            if line.startswith('# '):
+                # Save previous section
+                if current_content:
+                    sections[current_section] = '\n'.join(current_content).strip()
+                current_section = line[2:].strip().lower().replace(' ', '_')
+                current_content = []
+            elif line.startswith('## '):
+                if current_content:
+                    sections[current_section] = '\n'.join(current_content).strip()
+                current_section = line[3:].strip().lower().replace(' ', '_')
+                current_content = []
+            else:
+                current_content.append(line)
+
+        # Save last section
+        if current_content:
+            sections[current_section] = '\n'.join(current_content).strip()
+
+        return sections

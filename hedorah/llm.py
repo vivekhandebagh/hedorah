@@ -191,20 +191,38 @@ class ReasoningClient(ABC):
         pass
 
     def analyze_paper(self, content: PDFContent, summary: Dict[str, Any],
-                       user_notes: List[Dict[str, str]] = None) -> Dict[str, Any]:
+                       user_notes: List[Dict[str, str]] = None,
+                       agenda: Dict[str, Any] = None) -> Dict[str, Any]:
         """Perform deep analysis of a research paper.
 
         Args:
             content: Extracted PDF content
             summary: Summary from local model
             user_notes: Optional list of user notes from vault to incorporate
+            agenda: Optional research agenda to guide analysis
 
         Returns:
             Deep analysis with insights and connections
         """
-        system_prompt = """You are an expert research analyst. Your task is to deeply analyze research papers, identify conceptual connections, research gaps, and generate actionable insights.
+        # Build agenda-aware system prompt
+        agenda_context = ""
+        if agenda:
+            agenda_context = f"""
 
-If the user has provided personal notes/thoughts, treat them as important context. Look for connections between the paper and these notes. The user's intuitions and questions are valuable - try to validate, extend, or connect them to the paper's findings."""
+IMPORTANT: The user has a specific research agenda. Prioritize insights and connections that align with their goals. Here is their research agenda:
+
+{agenda.get('content', '')}
+
+When analyzing this paper:
+- Highlight aspects most relevant to their stated focus areas
+- Identify connections to their current questions and interests
+- Flag if the paper contradicts or supports their hunches
+- Note if the paper is outside their stated interests (but still summarize key findings)
+"""
+
+        system_prompt = f"""You are an expert research analyst. Your task is to deeply analyze research papers, identify conceptual connections, research gaps, and generate actionable insights.
+
+If the user has provided personal notes/thoughts, treat them as important context. Look for connections between the paper and these notes. The user's intuitions and questions are valuable - try to validate, extend, or connect them to the paper's findings.{agenda_context}"""
 
         # Build user notes section if provided
         notes_section = ""
@@ -292,17 +310,35 @@ Provide a comprehensive analysis in JSON format:
                 "raw_response": response
             }
 
-    def generate_experiments(self, content: PDFContent, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def generate_experiments(self, content: PDFContent, analysis: Dict[str, Any],
+                              agenda: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Generate experiment proposals based on the paper.
 
         Args:
             content: Extracted PDF content
             analysis: Deep analysis results
+            agenda: Optional research agenda to guide experiment design
 
         Returns:
             List of experiment proposals
         """
-        system_prompt = """You are an expert research experiment designer. Your task is to read research papers and design structured experiment specifications that could validate, extend, or challenge the paper's findings.
+        # Build agenda-aware context
+        agenda_context = ""
+        if agenda:
+            agenda_context = f"""
+
+IMPORTANT: The user has a specific research agenda. Design experiments that align with their goals and constraints. Here is their research agenda:
+
+{agenda.get('content', '')}
+
+When designing experiments:
+- Prioritize experiments that address their stated questions and interests
+- Respect any resource constraints they've mentioned (compute, time, etc.)
+- Avoid suggesting experiments in areas they've marked as "not interested"
+- Connect experiments to their current hunches and hypotheses when relevant
+"""
+
+        system_prompt = f"""You are an expert research experiment designer. Your task is to read research papers and design structured experiment specifications that could validate, extend, or challenge the paper's findings.
 
 You are NOT generating code. You are generating a detailed experiment specification document that another researcher or agent could use to implement the experiment.
 
@@ -313,7 +349,7 @@ Focus on:
 4. Pseudocode for any complex algorithmic logic
 5. Expected results with clear success criteria
 
-The experiment specification should be self-contained - someone reading it should understand exactly what to build and why, without needing to read the source paper."""
+The experiment specification should be self-contained - someone reading it should understand exactly what to build and why, without needing to read the source paper.{agenda_context}"""
 
         user_prompt = f"""Based on this paper analysis, generate experiment proposals:
 

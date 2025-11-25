@@ -36,6 +36,9 @@ class HedorahPipeline:
         self.formatter = ObsidianFormatter(config.vault_path)
         self.vault_reader = VaultReader(config.vault_path)
 
+        # Load research agenda
+        self.agenda = self._load_agenda()
+
         # Setup logging
         self._setup_logging()
 
@@ -103,7 +106,7 @@ class HedorahPipeline:
 
         # 3. Deep analysis with Claude
         logger.info("Step 3/5: Performing deep analysis with Claude...")
-        analysis = self.reasoning_client.analyze_paper(content, summary, user_notes)
+        analysis = self.reasoning_client.analyze_paper(content, summary, user_notes, self.agenda)
         logger.info(f"Identified {len(analysis.get('key_insights', []))} insights, "
                    f"{len(analysis.get('research_gaps', []))} research gaps")
         if analysis.get('note_connections'):
@@ -113,7 +116,7 @@ class HedorahPipeline:
         experiments = []
         if not skip_experiments:
             logger.info("Step 4/5: Generating experiment proposals...")
-            experiments = self.reasoning_client.generate_experiments(content, analysis)
+            experiments = self.reasoning_client.generate_experiments(content, analysis, self.agenda)
             logger.info(f"Generated {len(experiments)} experiment proposals")
         else:
             logger.info("Step 4/5: Skipping experiment generation")
@@ -201,6 +204,22 @@ class HedorahPipeline:
                 logger.info(f"Created experiment note: {exp_note_path.name}")
 
         return created_notes
+
+    def _load_agenda(self) -> Optional[Dict[str, Any]]:
+        """Load research agenda from configured file.
+
+        Returns:
+            Agenda dict or None if not configured/found
+        """
+        agenda_path = self.config.get('research_profile.agenda')
+        if not agenda_path:
+            logger.info("No research agenda configured")
+            return None
+
+        agenda = self.vault_reader.read_agenda(agenda_path)
+        if agenda:
+            logger.info(f"Loaded research agenda from {agenda_path}")
+        return agenda
 
     def _read_user_notes(self) -> List[Dict[str, str]]:
         """Read user notes from the vault's notes folder.

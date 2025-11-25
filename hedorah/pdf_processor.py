@@ -22,6 +22,9 @@ class Figure:
     caption: str
     image_path: Path
     page: int
+    width: int = 0
+    height: int = 0
+    description: str = ""  # LLM-generated description
 
 
 @dataclass
@@ -49,19 +52,26 @@ class PDFContent:
 class PDFProcessor:
     """Processes PDF files to extract structured content."""
 
+    # Minimum image dimensions to consider (skip icons, logos, etc.)
+    MIN_IMAGE_WIDTH = 200
+    MIN_IMAGE_HEIGHT = 200
+
     def __init__(self, extract_figures: bool = True,
                  extract_equations: bool = True,
-                 extract_citations: bool = True):
+                 extract_citations: bool = True,
+                 max_figures: int = 2):
         """Initialize PDF processor.
 
         Args:
             extract_figures: Whether to extract figures and diagrams
             extract_equations: Whether to extract equations
             extract_citations: Whether to extract citations
+            max_figures: Maximum number of figures to extract (default 2)
         """
         self.extract_figures = extract_figures
         self.extract_equations = extract_equations
         self.extract_citations = extract_citations
+        self.max_figures = max_figures
 
     def process(self, pdf_path: Path, output_dir: Path = None) -> PDFContent:
         """Process a PDF file and extract all content.
@@ -216,14 +226,17 @@ class PDFProcessor:
     def _extract_figures(self, doc: pymupdf.Document, output_dir: Path) -> List[Figure]:
         """Extract figures and diagrams from the document.
 
+        Filters out small images (icons, logos) and limits to max_figures.
+        Prioritizes images with captions and larger dimensions.
+
         Args:
             doc: PyMuPDF document
             output_dir: Directory to save extracted images
 
         Returns:
-            List of extracted figures
+            List of extracted figures (up to max_figures)
         """
-        figures = []
+        candidates = []
         output_dir.mkdir(parents=True, exist_ok=True)
 
         for page_num, page in enumerate(doc, start=1):
@@ -233,27 +246,60 @@ class PDFProcessor:
             for img_index, img in enumerate(image_list):
                 xref = img[0]
 
-                # Extract image
-                base_image = doc.extract_image(xref)
-                image_bytes = base_image["image"]
-                image_ext = base_image["ext"]
+                try:
+                    # Extract image
+                    base_image = doc.extract_image(xref)
+                    image_bytes = base_image["image"]
+                    image_ext = base_image["ext"]
+                    width = base_image.get("width", 0)
+                    height = base_image.get("height", 0)
 
-                # Save image
-                image_filename = f"figure_p{page_num}_{img_index + 1}.{image_ext}"
-                image_path = output_dir / image_filename
+                    # Skip small images (icons, logos, decorations)
+                    if width < self.MIN_IMAGE_WIDTH or height < self.MIN_IMAGE_HEIGHT:
+                        continue
 
-                with open(image_path, "wb") as img_file:
-                    img_file.write(image_bytes)
+                    # Try to find caption
+                    caption = self._find_figure_caption(page.get_text(), img_index + 1)
 
-                # Try to find caption
-                caption = self._find_figure_caption(page.get_text(), img_index + 1)
+                    # Calculate priority score (prefer larger images with captions)
+                    area = width * height
+                    has_caption = 1 if caption else 0
+                    priority_score = area + (has_caption * 500000)  # Bonus for having caption
 
-                figures.append(Figure(
-                    number=len(figures) + 1,
-                    caption=caption,
-                    image_path=image_path,
-                    page=page_num
-                ))
+                    candidates.append({
+                        "image_bytes": image_bytes,
+                        "image_ext": image_ext,
+                        "width": width,
+                        "height": height,
+                        "caption": caption,
+                        "page": page_num,
+                        "priority": priority_score
+                    })
+                except Exception:
+                    # Skip images that can't be extracted
+                    continue
+
+        # Sort by priority (highest first) and take top max_figures
+        candidates.sort(key=lambda x: x["priority"], reverse=True)
+        selected = candidates[:self.max_figures]
+
+        # Save selected figures
+        figures = []
+        for i, candidate in enumerate(selected, start=1):
+            image_filename = f"figure_{i}.{candidate['image_ext']}"
+            image_path = output_dir / image_filename
+
+            with open(image_path, "wb") as img_file:
+                img_file.write(candidate["image_bytes"])
+
+            figures.append(Figure(
+                number=i,
+                caption=candidate["caption"],
+                image_path=image_path,
+                page=candidate["page"],
+                width=candidate["width"],
+                height=candidate["height"]
+            ))
 
         return figures
 

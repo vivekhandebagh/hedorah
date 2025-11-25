@@ -7,6 +7,8 @@ vault:
   folders:
     papers: "papers"
     notes: "notes"
+    insights: "insights"
+    connections: "connections"
     experiments: "experiments"
     attachments: "attachments"
     inbox: "inbox"
@@ -35,7 +37,8 @@ llm:
 
 # Processing settings
 processing:
-  extract_figures: true
+  extract_figures: true      # Set to false to disable figure extraction
+  max_figures: 2             # Maximum figures to extract per paper (default: 2)
   extract_equations: true
   extract_citations: true
   auto_tag: true

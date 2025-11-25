@@ -2,11 +2,12 @@
 
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from .config import Config
 from .pdf_processor import PDFProcessor, PDFContent
 from .llm import OllamaClient, create_reasoning_client
 from .obsidian import ObsidianFormatter
+from .vault import VaultReader
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +27,14 @@ class HedorahPipeline:
         self.pdf_processor = PDFProcessor(
             extract_figures=config.get('processing.extract_figures', True),
             extract_equations=config.get('processing.extract_equations', True),
-            extract_citations=config.get('processing.extract_citations', True)
+            extract_citations=config.get('processing.extract_citations', True),
+            max_figures=config.get('processing.max_figures', 2)
         )
 
         self.ollama = OllamaClient(config)
         self.reasoning_client = create_reasoning_client(config)
         self.formatter = ObsidianFormatter(config.vault_path)
+        self.vault_reader = VaultReader(config.vault_path)
 
         # Setup logging
         self._setup_logging()
@@ -71,16 +74,40 @@ class HedorahPipeline:
                    f"{len(content.equations)} equations, "
                    f"{len(content.citations)} citations")
 
+        # 1b. Generate descriptions for figures using local LLM
+        if content.figures:
+            logger.info("Step 1b: Generating figure descriptions...")
+            figure_descriptions = self.ollama.generate_figure_descriptions(
+                content.title,
+                content.abstract,
+                content.figures,
+                max_figures=self.config.get('processing.max_figures', 2)
+            )
+            # Update figures with descriptions
+            for fig_desc in figure_descriptions:
+                fig_num = fig_desc.get("figure_number", 0) - 1
+                if 0 <= fig_num < len(content.figures):
+                    desc = fig_desc.get("description", "")
+                    importance = fig_desc.get("importance", "")
+                    content.figures[fig_num].description = f"{desc} {importance}".strip()
+
         # 2. Generate summary with local model
         logger.info("Step 2/5: Generating summary with local model (Qwen)...")
         summary = self.ollama.summarize_paper(content)
         logger.info(f"Generated summary with {len(summary.get('tags', []))} tags")
 
+        # 2b. Read user notes from vault
+        user_notes = self._read_user_notes()
+        if user_notes:
+            logger.info(f"Found {len(user_notes)} user notes to incorporate")
+
         # 3. Deep analysis with Claude
         logger.info("Step 3/5: Performing deep analysis with Claude...")
-        analysis = self.reasoning_client.analyze_paper(content, summary)
+        analysis = self.reasoning_client.analyze_paper(content, summary, user_notes)
         logger.info(f"Identified {len(analysis.get('key_insights', []))} insights, "
                    f"{len(analysis.get('research_gaps', []))} research gaps")
+        if analysis.get('note_connections'):
+            logger.info(f"Found {len(analysis.get('note_connections', []))} connections to your notes")
 
         # 4. Generate experiment proposals (optional)
         experiments = []
@@ -130,12 +157,14 @@ class HedorahPipeline:
 
         # 2. Create insights note
         if analysis.get('key_insights'):
-            notes_dir = self.config.get_vault_folder('notes')
-            notes_dir.mkdir(parents=True, exist_ok=True)
+            insights_dir = self.config.get_vault_folder('insights')
+            insights_dir.mkdir(parents=True, exist_ok=True)
 
-            insights_note_path = notes_dir / f"Insights - {safe_title}.md"
+            insights_note_path = insights_dir / f"Insights - {safe_title}.md"
             insights_note = self.formatter.create_insight_note(
-                content.title, analysis['key_insights']
+                content.title,
+                analysis['key_insights'],
+                analysis.get('note_connections')
             )
             insights_note_path.write_text(insights_note, encoding='utf-8')
             created_notes['insights'] = insights_note_path
@@ -143,10 +172,10 @@ class HedorahPipeline:
 
         # 3. Create connections note
         if analysis.get('connections'):
-            notes_dir = self.config.get_vault_folder('notes')
-            notes_dir.mkdir(parents=True, exist_ok=True)
+            connections_dir = self.config.get_vault_folder('connections')
+            connections_dir.mkdir(parents=True, exist_ok=True)
 
-            connections_note_path = notes_dir / f"Connections - {safe_title}.md"
+            connections_note_path = connections_dir / f"Connections - {safe_title}.md"
             connections_note = self.formatter.create_connections_note(
                 content.title, analysis['connections']
             )
@@ -172,6 +201,23 @@ class HedorahPipeline:
                 logger.info(f"Created experiment note: {exp_note_path.name}")
 
         return created_notes
+
+    def _read_user_notes(self) -> List[Dict[str, str]]:
+        """Read user notes from the vault's notes folder.
+
+        Returns:
+            List of user notes with title and content
+        """
+        notes_dir = self.config.get_vault_folder('notes')
+
+        if not notes_dir.exists():
+            return []
+
+        # Read recent notes (last 30 days, up to 20 notes)
+        notes = self.vault_reader.get_recent_notes(notes_dir, days=30)
+
+        # Limit to most recent 20 to avoid context bloat
+        return notes[:20]
 
     def _sanitize_filename(self, text: str) -> str:
         """Sanitize text for use as filename.

@@ -97,15 +97,18 @@ class ObsidianFormatter:
                 md_parts.append(f"- {limitation}")
             md_parts.append("")
 
-        # Figures
+        # Key Figures (with descriptions)
         if content.figures:
-            md_parts.append("## Figures")
+            md_parts.append("## Key Figures")
             for fig in content.figures:
                 # Create relative path to figure
                 fig_name = fig.image_path.name
                 md_parts.append(f"### Figure {fig.number}")
                 md_parts.append(f"![[{figures_folder}/{fig_name}]]")
-                if fig.caption:
+                # Show description if available, otherwise caption
+                if fig.description:
+                    md_parts.append(f"\n{fig.description}")
+                elif fig.caption:
                     md_parts.append(f"*{fig.caption}*")
                 md_parts.append("")
 
@@ -120,12 +123,14 @@ class ObsidianFormatter:
 
         return "\n".join(md_parts)
 
-    def create_insight_note(self, paper_title: str, insights: List[Dict[str, Any]]) -> str:
+    def create_insight_note(self, paper_title: str, insights: List[Dict[str, Any]],
+                            note_connections: List[Dict[str, Any]] = None) -> str:
         """Create a research insight note.
 
         Args:
             paper_title: Title of the source paper
             insights: List of insights from Claude analysis
+            note_connections: Optional connections to user's personal notes
 
         Returns:
             Markdown formatted note
@@ -135,7 +140,7 @@ class ObsidianFormatter:
 
         frontmatter = self._create_frontmatter(
             title=note_title,
-            tags=["insights", "research-notes", "ai-interpretability"],
+            tags=["insights", "research-notes"],
             source_paper=paper_title
         )
 
@@ -157,6 +162,17 @@ class ObsidianFormatter:
                     md_parts.append(f"- [[{connection}]]")
                 md_parts.append("")
 
+        # Add connections to user's personal notes
+        if note_connections:
+            md_parts.append("## Connections to Your Notes\n")
+            for conn in note_connections:
+                note_title_link = conn.get("note_title", "Unknown")
+                md_parts.append(f"### [[{note_title_link}]]")
+                if conn.get("connection"):
+                    md_parts.append(f"{conn['connection']}\n")
+                if conn.get("insight"):
+                    md_parts.append(f"**Insight:** {conn['insight']}\n")
+
         return "\n".join(md_parts)
 
     def create_experiment_note(self, paper_title: str, experiment: Dict[str, Any]) -> str:
@@ -170,72 +186,123 @@ class ObsidianFormatter:
             Markdown formatted note
         """
         exp_title = experiment.get("title", "Untitled Experiment")
+        exp_id = experiment.get("experiment_id", "")
 
         frontmatter = self._create_frontmatter(
             title=exp_title,
-            tags=["experiment", "proposal", "ai-interpretability"],
+            tags=["experiment", "proposal"],
             source_paper=paper_title,
+            experiment_id=exp_id,
             difficulty=experiment.get("difficulty", "unknown"),
             status="proposed"
         )
 
         md_parts = [frontmatter]
         md_parts.append(f"# {exp_title}\n")
+
+        # Research Context
+        md_parts.append("## Research Context")
         md_parts.append(f"**Source Paper:** [[{paper_title}]]")
-        md_parts.append(f"**Difficulty:** {experiment.get('difficulty', 'N/A')}")
-        md_parts.append(f"**Estimated Time:** {experiment.get('estimated_time', 'N/A')}")
-        md_parts.append(f"**Status:** 🔵 Proposed\n")
+        md_parts.append(f"**Status:** Proposed | **Difficulty:** {experiment.get('difficulty', 'N/A')} | **Est. Time:** {experiment.get('estimated_time', 'N/A')}\n")
 
         # Motivation
         if experiment.get("motivation"):
-            md_parts.append("## Motivation")
+            md_parts.append("### Motivation")
             md_parts.append(f"{experiment['motivation']}\n")
 
         # Hypothesis
         if experiment.get("hypothesis"):
-            md_parts.append("## Hypothesis")
+            md_parts.append("### Hypothesis")
             md_parts.append(f"{experiment['hypothesis']}\n")
 
-        # Methodology
-        if experiment.get("methodology"):
-            md_parts.append("## Methodology")
-            methodology = experiment["methodology"]
+        # Source Insights
+        if experiment.get("source_insights"):
+            md_parts.append("### Source Insights")
+            for insight in experiment["source_insights"]:
+                md_parts.append(f"- {insight}")
+            md_parts.append("")
 
-            if methodology.get("approach"):
-                md_parts.append(f"**Approach:** {methodology['approach']}\n")
+        # Experimental Design
+        md_parts.append("## Experimental Design\n")
 
-            if methodology.get("steps"):
-                md_parts.append("**Steps:**")
-                for j, step in enumerate(methodology["steps"], 1):
-                    md_parts.append(f"{j}. {step}")
+        # Objective
+        if experiment.get("objective"):
+            md_parts.append("### Objective")
+            md_parts.append(f"{experiment['objective']}\n")
+
+        # Variables
+        variables = experiment.get("variables", {})
+        if variables:
+            md_parts.append("### Variables")
+            md_parts.append("| Type | Variables |")
+            md_parts.append("|------|-----------|")
+            independent = ", ".join(variables.get("independent", [])) or "N/A"
+            dependent = ", ".join(variables.get("dependent", [])) or "N/A"
+            controlled = ", ".join(variables.get("controlled", [])) or "N/A"
+            md_parts.append(f"| Independent (manipulate) | {independent} |")
+            md_parts.append(f"| Dependent (measure) | {dependent} |")
+            md_parts.append(f"| Controlled | {controlled} |")
+            md_parts.append("")
+
+        # Parameters
+        parameters = experiment.get("parameters", [])
+        if parameters:
+            md_parts.append("## Parameters")
+            md_parts.append("| Parameter | Type | Description | Default/Range |")
+            md_parts.append("|-----------|------|-------------|---------------|")
+            for param in parameters:
+                name = param.get("name", "")
+                ptype = param.get("type", "")
+                desc = param.get("description", "")
+                default_range = param.get("default", param.get("range", ""))
+                md_parts.append(f"| {name} | {ptype} | {desc} | {default_range} |")
+            md_parts.append("")
+
+        # Procedure
+        procedure = experiment.get("procedure", [])
+        if procedure:
+            md_parts.append("## Procedure\n")
+            for i, phase in enumerate(procedure, 1):
+                phase_name = phase.get("phase", f"Phase {i}")
+                md_parts.append(f"### {i}. {phase_name}")
+                steps = phase.get("steps", [])
+                for step in steps:
+                    md_parts.append(f"- [ ] {step}")
+
+                pseudocode = phase.get("pseudocode")
+                if pseudocode:
+                    md_parts.append("")
+                    md_parts.append("```")
+                    md_parts.append(pseudocode)
+                    md_parts.append("```")
                 md_parts.append("")
 
-            if methodology.get("required_resources"):
-                md_parts.append("**Required Resources:**")
-                for resource in methodology["required_resources"]:
-                    md_parts.append(f"- {resource}")
-                md_parts.append("")
+        # Expected Results
+        expected_results = experiment.get("expected_results", [])
+        if expected_results:
+            md_parts.append("## Expected Results")
+            md_parts.append("| Result | Type | What it tells us |")
+            md_parts.append("|--------|------|------------------|")
+            for result in expected_results:
+                name = result.get("name", "")
+                rtype = result.get("type", "")
+                desc = result.get("description", "")
+                md_parts.append(f"| {name} | {rtype} | {desc} |")
+            md_parts.append("")
 
-        # Expected outcomes
-        if experiment.get("expected_outcomes"):
-            md_parts.append("## Expected Outcomes")
-            outcomes = experiment["expected_outcomes"]
-
-            if outcomes.get("success_criteria"):
-                md_parts.append(f"**Success Criteria:** {outcomes['success_criteria']}\n")
-
-            if outcomes.get("potential_findings"):
-                md_parts.append("**Potential Findings:**")
-                for finding in outcomes["potential_findings"]:
-                    md_parts.append(f"- {finding}")
-                md_parts.append("")
-
-            if outcomes.get("implications"):
-                md_parts.append(f"**Implications:** {outcomes['implications']}\n")
-
-        # Notes section for user
+        # Implementation Notes
         md_parts.append("## Implementation Notes")
-        md_parts.append("*Add your notes and progress updates here*\n")
+        suggested_tools = experiment.get("suggested_tools", [])
+        if suggested_tools:
+            md_parts.append(f"**Suggested Tools:** {', '.join(suggested_tools)}")
+
+        prerequisites = experiment.get("prerequisites", [])
+        if prerequisites:
+            md_parts.append(f"**Prerequisites:** {', '.join(prerequisites)}")
+
+        md_parts.append("")
+        md_parts.append("---")
+        md_parts.append("*Implementation notes and results go below*\n")
 
         return "\n".join(md_parts)
 
